@@ -1,6 +1,7 @@
 const express = require('express');
 const { Pool } = require('pg');
 const basicAuth = require('basic-auth');
+const crypto = require('crypto');
 require('dotenv').config();
 
 const app = express();
@@ -23,6 +24,20 @@ const auth = (req, res, next) => {
 };
 
 
+// Vercel signature verification
+const verifyVercelSignature = (req) => {
+  if (!process.env.LOG_DRAIN_SECRET || !req.headers['x-vercel-signature']) {
+    return true; // Skip verification during initial setup
+  }
+  
+  const signature = crypto
+    .createHmac('sha1', process.env.LOG_DRAIN_SECRET)
+    .update(JSON.stringify(req.body))
+    .digest('hex');
+  
+  return signature === req.headers['x-vercel-signature'];
+};
+
 // Vercel log endpoint
 app.post('/logs/vercel', auth, async (req, res) => {
   try {
@@ -37,6 +52,12 @@ app.post('/logs/vercel', auth, async (req, res) => {
         (typeof req.body === 'object' && Object.keys(req.body).length === 0)) {
       console.log('Vercel verification request detected');
       return res.status(200).json({ received: 0, verification: true });
+    }
+    
+    // Verify signature for actual log requests
+    if (!verifyVercelSignature(req)) {
+      console.error('Invalid Vercel signature');
+      return res.status(401).json({ error: 'Invalid signature' });
     }
     
     const logs = Array.isArray(req.body) ? req.body : [req.body];
