@@ -22,24 +22,20 @@ const auth = (req, res, next) => {
   next();
 };
 
-// Vercel verification - handle all methods for the one-time verification
-app.all('/logs/vercel', (req, res, next) => {
-  // Always send the verification header for any request
-  res.setHeader('x-vercel-verify', 'b3d85ec654c790ee25f9ca3c445b2c9a12ca0213');
+// Vercel verification special case - handle verification POST separately
+app.post('/logs/vercel', (req, res, next) => {
+  // Check if this is a verification request (empty body or invalid data)
+  const isVerification = !req.body || 
+    (Array.isArray(req.body) && req.body.length === 0) ||
+    (Array.isArray(req.body) && req.body[0]?.timestamp === undefined);
   
-  // For GET/HEAD requests, just return OK with the header
-  if (req.method === 'GET' || req.method === 'HEAD') {
-    console.log(`Vercel verification ${req.method} request`);
-    return res.status(200).send('OK');
+  if (isVerification) {
+    console.log('Vercel verification POST request detected');
+    res.setHeader('x-vercel-verify', 'b3d85ec654c790ee25f9ca3c445b2c9a12ca0213');
+    return res.status(200).json({ received: 0, verification: true });
   }
   
-  // For POST requests during verification, handle empty/invalid data gracefully
-  if (req.method === 'POST' && (!req.body || (Array.isArray(req.body) && req.body.length === 0))) {
-    console.log('Vercel verification POST with empty body');
-    return res.status(200).json({ received: 0 });
-  }
-  
-  // Pass through to the actual POST handler for real logs
+  // Not a verification request, pass to actual log handler with auth
   next();
 });
 
