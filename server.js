@@ -22,29 +22,25 @@ const auth = (req, res, next) => {
   next();
 };
 
-// Vercel verification special case - handle verification POST separately
-app.post('/logs/vercel', (req, res, next) => {
-  // Check if this is a verification request (empty body or invalid data)
-  const isVerification = !req.body || 
-    (Array.isArray(req.body) && req.body.length === 0) ||
-    (Array.isArray(req.body) && req.body[0]?.timestamp === undefined);
-  
-  if (isVerification) {
-    console.log('Vercel verification POST request detected');
-    res.setHeader('x-vercel-verify', 'b3d85ec654c790ee25f9ca3c445b2c9a12ca0213');
-    return res.status(200).json({ received: 0, verification: true });
-  }
-  
-  // Not a verification request, pass to actual log handler with auth
-  next();
-});
 
 // Vercel log endpoint
 app.post('/logs/vercel', auth, async (req, res) => {
   try {
+    // Always send the verification header
+    res.setHeader('x-vercel-verify', 'b3d85ec654c790ee25f9ca3c445b2c9a12ca0213');
+    
     console.log('Vercel POST request body:', JSON.stringify(req.body, null, 2));
     
+    // Check if this is a verification request (empty object or empty array)
+    if (!req.body || 
+        (Array.isArray(req.body) && req.body.length === 0) || 
+        (typeof req.body === 'object' && Object.keys(req.body).length === 0)) {
+      console.log('Vercel verification request detected');
+      return res.status(200).json({ received: 0, verification: true });
+    }
+    
     const logs = Array.isArray(req.body) ? req.body : [req.body];
+    let validLogs = 0;
     
     for (const log of logs) {
       // Validate timestamp before processing
@@ -72,9 +68,10 @@ app.post('/logs/vercel', auth, async (req, res) => {
           buildId: log.buildId
         }
       ]);
+      validLogs++;
     }
     
-    res.status(200).json({ received: logs.length });
+    res.status(200).json({ received: validLogs });
   } catch (error) {
     console.error('Error processing Vercel logs:', error);
     res.status(500).json({ error: 'Internal server error' });
