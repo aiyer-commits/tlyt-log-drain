@@ -22,6 +22,12 @@ const auth = (req, res, next) => {
   next();
 };
 
+// Vercel verification endpoint
+app.get('/logs/vercel', (req, res) => {
+  res.setHeader('x-vercel-verify', 'b3d85ec654c790ee25f9ca3c445b2c9a12ca0213');
+  res.status(200).send('OK');
+});
+
 // Vercel log endpoint
 app.post('/logs/vercel', auth, async (req, res) => {
   try {
