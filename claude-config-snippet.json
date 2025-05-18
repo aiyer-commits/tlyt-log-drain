@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "tlyt-logs": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["/home/ai/Development/tlyt/log-drain-service/mcp-server.js"],
+      "env": {
+        "DATABASE_URL": "postgres://tlyt_log_drain:ZxSt5nIOJ2oEN2X@tlyt-log-drain-legacy.flycast:5432/tlyt_log_drain?sslmode=disable"
+      }
+    }
+  }
+}
