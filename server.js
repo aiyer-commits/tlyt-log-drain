@@ -22,10 +22,17 @@ const auth = (req, res, next) => {
   next();
 };
 
-// Vercel verification endpoint
+// Vercel verification endpoint (handle GET/HEAD for verification)
 app.get('/logs/vercel', (req, res) => {
+  console.log('Vercel verification GET request:', req.headers);
   res.setHeader('x-vercel-verify', 'b3d85ec654c790ee25f9ca3c445b2c9a12ca0213');
   res.status(200).send('OK');
+});
+
+app.head('/logs/vercel', (req, res) => {
+  console.log('Vercel verification HEAD request:', req.headers);
+  res.setHeader('x-vercel-verify', 'b3d85ec654c790ee25f9ca3c445b2c9a12ca0213');
+  res.status(200).send();
 });
 
 // Vercel log endpoint
