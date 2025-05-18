@@ -1,0 +1,17 @@
+{
+  "name": "log-drain-service",
+  "version": "1.0.0",
+  "description": "Log drain service for Vercel and Gigalixir with MCP integration",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "mcp": "node mcp-server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.0",
+    "pg": "^8.11.0",
+    "dotenv": "^16.0.0",
+    "basic-auth": "^2.0.0",
+    "@modelcontextprotocol/server": "^0.1.0"
+  }
+}

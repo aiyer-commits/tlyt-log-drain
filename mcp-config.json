@@ -1,0 +1,91 @@
+{
+  "name": "tlyt-logs",
+  "description": "Access TLYT application logs from Vercel and Gigalixir",
+  "methods": {
+    "logs.recent": {
+      "description": "Get recent logs",
+      "parameters": {
+        "limit": {
+          "type": "number",
+          "description": "Number of logs to return",
+          "default": 100
+        }
+      }
+    },
+    "logs.timeRange": {
+      "description": "Get logs within time range",
+      "parameters": {
+        "from": {
+          "type": "string",
+          "description": "Start timestamp",
+          "required": true
+        },
+        "to": {
+          "type": "string",
+          "description": "End timestamp",
+          "required": true
+        }
+      }
+    },
+    "logs.errors": {
+      "description": "Get error logs only",
+      "parameters": {
+        "limit": {
+          "type": "number",
+          "description": "Number of logs to return",
+          "default": 100
+        }
+      }
+    },
+    "logs.search": {
+      "description": "Full-text search in logs",
+      "parameters": {
+        "query": {
+          "type": "string",
+          "description": "Search query",
+          "required": true
+        },
+        "limit": {
+          "type": "number",
+          "description": "Number of logs to return",
+          "default": 100
+        }
+      }
+    },
+    "logs.byRequest": {
+      "description": "Get all logs for a request ID",
+      "parameters": {
+        "requestId": {
+          "type": "string",
+          "description": "Request ID to search for",
+          "required": true
+        }
+      }
+    },
+    "logs.query": {
+      "description": "Execute custom SQL query",
+      "parameters": {
+        "sql": {
+          "type": "string",
+          "description": "SQL query (SELECT only)",
+          "required": true
+        },
+        "values": {
+          "type": "array",
+          "description": "Query parameters",
+          "default": []
+        }
+      }
+    },
+    "logs.stats": {
+      "description": "Get log statistics",
+      "parameters": {
+        "hours": {
+          "type": "number",
+          "description": "Number of hours to analyze",
+          "default": 24
+        }
+      }
+    }
+  }
+}
