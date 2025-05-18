@@ -22,38 +22,53 @@ const auth = (req, res, next) => {
   next();
 };
 
-// Vercel verification endpoint (handle GET/HEAD for verification)
-app.get('/logs/vercel', (req, res) => {
-  console.log('Vercel verification GET request:', req.headers);
+// Vercel verification - handle all methods for the one-time verification
+app.all('/logs/vercel', (req, res, next) => {
+  // Always send the verification header for any request
   res.setHeader('x-vercel-verify', 'b3d85ec654c790ee25f9ca3c445b2c9a12ca0213');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.status(200).send('OK');
-});
-
-app.head('/logs/vercel', (req, res) => {
-  console.log('Vercel verification HEAD request:', req.headers);
-  res.setHeader('x-vercel-verify', 'b3d85ec654c790ee25f9ca3c445b2c9a12ca0213');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.status(200).end();
+  
+  // For GET/HEAD requests, just return OK with the header
+  if (req.method === 'GET' || req.method === 'HEAD') {
+    console.log(`Vercel verification ${req.method} request`);
+    return res.status(200).send('OK');
+  }
+  
+  // For POST requests during verification, handle empty/invalid data gracefully
+  if (req.method === 'POST' && (!req.body || (Array.isArray(req.body) && req.body.length === 0))) {
+    console.log('Vercel verification POST with empty body');
+    return res.status(200).json({ received: 0 });
+  }
+  
+  // Pass through to the actual POST handler for real logs
+  next();
 });
 
 // Vercel log endpoint
 app.post('/logs/vercel', auth, async (req, res) => {
   try {
+    console.log('Vercel POST request body:', JSON.stringify(req.body, null, 2));
+    
     const logs = Array.isArray(req.body) ? req.body : [req.body];
     
     for (const log of logs) {
+      // Validate timestamp before processing
+      const timestamp = new Date(log.timestamp);
+      if (isNaN(timestamp.getTime())) {
+        console.log('Invalid timestamp:', log.timestamp);
+        continue; // Skip logs with invalid timestamps
+      }
+      
       await pool.query(`
         INSERT INTO logs (timestamp, source, level, message, request_id, project_id, deployment_id, metadata)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       `, [
-        new Date(log.timestamp),
+        timestamp,
         'frontend',
         log.type === 'stderr' ? 'error' : 'info',
-        log.message,
+        log.message || '',
         log.requestId || null,
-        log.projectId,
-        log.deploymentId,
+        log.projectId || null,
+        log.deploymentId || null,
         {
           host: log.host,
           path: log.path,
